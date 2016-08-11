@@ -1,5 +1,5 @@
 # twitch-player-qt
-![Alt text](/Screenshot_20160705_170627.png?raw=true 'screenshot')
+![Alt text](/Снимок экрана от 2016-08-11 19-25-30.png?raw=true 'screenshot')
 ```
 https://www.youtube.com/watch?v=nxCp55ZWfmY
 ```
