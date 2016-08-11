@@ -8,9 +8,12 @@ class TwitchPlayer(QtWidgets.QWidget):
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
         # vlc init
-        self.vlc = vlc.Instance('--mouse-hide-timeout=5')
+        self.vlc = vlc.Instance()
         # media player object
         self.mediaplayer = self.vlc.media_player_new()
+        # bugged
+        # self.event_manager = self.mediaplayer.event_manager()
+        # self.event_manager.event_attach(vlc.EventType.MediaPlayerEncounteredError, self.http_error,1)
         # frame for video player
         self.tv_player = QtWidgets.QFrame() 
         self.tv_player_constructor = self.tv_player.palette()
@@ -45,21 +48,37 @@ class TwitchPlayer(QtWidgets.QWidget):
         self.tv_volumeslider.setToolTip("Volume")
         self.tv_volumeslider.valueChanged.connect(self.setVolume)
 
+        self.tv_play_button.setFixedSize(60,30)
+        self.tv_streamername.setFixedSize(200,30)
+        self.tv_volumeslider.setFixedSize(100,30)
+        self.tv_resolution.setFixedSize(100,30)
+        self.tv_full_screen_button.setFixedSize(70,30)
+        self.tv_open_button.setFixedSize(60,30)
+        self.tv_online_check.setFixedSize(95,30)
+
         # Boxes
         self.gbox = QtWidgets.QGridLayout()
-        self.header_box = QtWidgets.QHBoxLayout()
-        self.header_box.addWidget(self.tv_streamername)
-        self.header_box.addWidget(self.tv_open_button)
-        self.header_box.addWidget(self.tv_online_check)
-        self.bottom_box = QtWidgets.QHBoxLayout()
-        self.bottom_box.addWidget(self.tv_full_screen_button)
-        self.bottom_box.addWidget(self.tv_play_button)
-        self.bottom_box.addWidget(self.tv_resolution)
-        self.bottom_box.addWidget(self.tv_volumeslider)
+        self.top_box_L = QtWidgets.QHBoxLayout()
+        self.top_box_L.addWidget(self.tv_streamername)
+        self.top_box_L.addWidget(self.tv_open_button)
+
+        self.top_box_R = QtWidgets.QHBoxLayout()
+        self.top_box_R.addWidget(self.tv_online_check, alignment=QtCore.Qt.AlignRight)
+
+        self.bottom_box_L = QtWidgets.QHBoxLayout()
+        self.bottom_box_L.addWidget(self.tv_play_button)
+        self.bottom_box_L.addWidget(self.tv_resolution)
+
+        self.bottom_box_R = QtWidgets.QHBoxLayout()
+        self.bottom_box_R.setAlignment(QtCore.Qt.AlignRight)
+        self.bottom_box_R.addWidget(self.tv_volumeslider)
+        self.bottom_box_R.addWidget(self.tv_full_screen_button, alignment=QtCore.Qt.AlignHCenter)
         # Main Box
-        self.gbox.addLayout(self.header_box, 1, 0)
+        self.gbox.addLayout(self.top_box_L, 0, 0, QtCore.Qt.AlignLeft)
+        self.gbox.addLayout(self.top_box_R, 0,1, QtCore.Qt.AlignRight)
         self.gbox.addWidget(self.tv_player, 2, 0)
-        self.gbox.addLayout(self.bottom_box, 3, 0)
+        self.gbox.addLayout(self.bottom_box_L, 3, 0, QtCore.Qt.AlignLeft)
+        self.gbox.addLayout(self.bottom_box_R, 3, 1, QtCore.Qt.AlignRight)
 
         # Setting Layout
         self.setLayout(self.gbox)
@@ -73,6 +92,7 @@ class TwitchPlayer(QtWidgets.QWidget):
         self.tv_full_screen_button.clicked.connect(self.full_screen)
         self.channel_upped = 0
 
+
     def setVolume(self):
         """setting volume from self.tv_volumeslider"""
         self.mediaplayer.audio_set_volume(self.tv_volumeslider.value())
@@ -82,7 +102,6 @@ class TwitchPlayer(QtWidgets.QWidget):
         if self.isFullScreen():
             self.showNormal()
             self.gbox.setContentsMargins(10, 10, 10, 10)
-            self.tv_streamername.show()
             self.tv_play_button.show()
             self.tv_streamername.show()
             self.tv_volumeslider.show()
@@ -109,6 +128,8 @@ class TwitchPlayer(QtWidgets.QWidget):
 
     def tv_open_button_clicked(self):	
         """getting twitch playlist"""
+        if self.mediaplayer.is_playing():
+            self.mediaplayer.stop()
         self.tv_resolution.setDisabled(False)
         self.channel = self.tv_streamername.text()
         try:
@@ -178,4 +199,14 @@ class TwitchPlayer(QtWidgets.QWidget):
     def hide_helper_window(self):
         self.helperwindow.hide()
 
+    def resizeEvent(self, resizeEvent):
+        if (not self.isFullScreen()):
+            self.tv_player.setFixedWidth(self.width()-25)
 
+        else:
+            self.tv_player.setFixedWidth(self.width())
+
+    # @vlc.callbackmethod
+    # def http_error(self,data):
+    #    print("here")
+    #    return 0
