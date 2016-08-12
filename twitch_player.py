@@ -97,7 +97,7 @@ class TwitchPlayer(QtWidgets.QWidget):
         self.tv_resolution.setFixedSize(100, 30)
         self.tv_full_screen_button.setFixedSize(90, 30)
         self.tv_open_button.setFixedSize(90, 30)
-        self.tv_online_check.setFixedSize(95, 30)
+        self.tv_online_check.setFixedSize(110, 30)
         self.tv_add_channel.setFixedSize(100, 30)
         self.tv_del_channel.setFixedSize(140, 30)
 
@@ -152,6 +152,8 @@ class TwitchPlayer(QtWidgets.QWidget):
             self.showNormal()
             self.gbox.setContentsMargins(10, 10, 10, 10)
             self.tv_play_button.show()
+            self.tv_add_channel.show()
+            self.tv_del_channel.show()
             self.tv_streamername.show()
             self.tv_volumeslider.show()
             self.tv_resolution.show()
@@ -160,6 +162,8 @@ class TwitchPlayer(QtWidgets.QWidget):
             self.tv_online_check.show()
             self.tv_player.underMouse()
         else:
+            self.tv_add_channel.hide()
+            self.tv_del_channel.hide()
             self.tv_streamername.hide()
             self.tv_play_button.hide()
             self.tv_streamername.hide()
@@ -282,6 +286,9 @@ class TwitchPlayer(QtWidgets.QWidget):
         cursor.execute(createtable)
         cursor.execute(add_channel)
         con.commit()
+        self.tv_completer = QtWidgets.QCompleter(self.get_channels())
+        self.tv_streamername.setCompleter(self.tv_completer)
+
     def del_channel(self):
         from os.path import expanduser
         from os.path import isfile
@@ -290,9 +297,12 @@ class TwitchPlayer(QtWidgets.QWidget):
         if isfile("{0}/.cache/twitch/twitch.db".format(home_path)):
             con = sqlite3.connect(r'file:///{0}/twitch.db?mode=rw'.format(home_path + "/.cache/twitch"), uri=True)
             cursor = con.cursor()
-            del_channel = '''DELETE FROM channame WHERE name LIKE {0};'''.format(self.tv_streamername.text())
+            del_channel = """DELETE FROM channame WHERE name=\"{0}\";""".format(self.tv_streamername.text())
             cursor.execute(del_channel)
             con.commit()
+        self.tv_completer = QtWidgets.QCompleter(self.get_channels())
+        self.tv_streamername.setCompleter(self.tv_completer)
+
     def get_channels(self):
         from os.path import expanduser
         from os import mkdir
@@ -303,7 +313,7 @@ class TwitchPlayer(QtWidgets.QWidget):
             mkdir("{0}/.cache/twitch".format(home_path), 0o750)
             con = sqlite3.connect(r'file:///{0}/twitch.db?mode=rwc'.format(home_path + "/.cache/twitch"), uri=True)
             cursor = con.cursor()
-            createtable = '''CREATE TABLE IF NOT EXISTS channame (name TEXT UNIQUE ON CONFLICT IGNORE);'''
+            createtable = """CREATE TABLE IF NOT EXISTS channame (name TEXT UNIQUE ON CONFLICT IGNORE);"""
             cursor.execute(createtable)
             con.commit()
         con = sqlite3.connect(r'file:///{0}/twitch.db?mode=rwc'.format(home_path + "/.cache/twitch"), uri=True)
