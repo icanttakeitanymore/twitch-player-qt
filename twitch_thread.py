@@ -15,7 +15,6 @@ class TwitchThread(QtCore.QThread):
     # В этом методе находится тело потока.
     def run(self):
         while(not self.check):
-            print("here")
             try:
                 self.playlist = TwitchData(self.channel)
             except KeyError:

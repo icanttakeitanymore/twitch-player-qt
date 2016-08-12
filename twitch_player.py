@@ -1,12 +1,47 @@
+#!/usr/bin/env python3
 from PyQt5 import QtWidgets, QtGui, QtCore
 from twitch_api import TwitchData
 from twitch_thread import TwitchThread
+import sys
 import vlc
+class MainApplication(QtWidgets.QApplication):
+
+    def __init__(self, sys):
+        QtWidgets.QApplication.__init__(self, sys)
+        self.icon = QtGui.QIcon("resource/twitch.png")
+        self.icon_online = QtGui.QIcon("resource/twitch_online.png")
+        self.tv_player = TwitchPlayer()
+        self.tv_player.show()
+        self.tv_player.tv_player.setFocus(3)
+        self.tv_player.setMinimumSize(640,480)
+        self.setApplicationDisplayName("Twitch Player")
+        self.setApplicationName("Twitch Player")
+        self.tv_player.setWindowIcon(self.icon)
+        self.setWindowIcon(self.icon)
+        self.tray = QtWidgets.QSystemTrayIcon()
+        self.menu = QtWidgets.QMenu()
+        self.menu.addAction("Show window", self.tv_player_show)
+        self.menu.addAction("Exit", QtWidgets.QApplication.exit)
+        self.tray.setIcon(self.icon)
+        self.tray.setContextMenu(self.menu)
+        self.tray.show()
+        self.moveToCenter()
+
+    def tv_player_show(self):
+        self.tv_player.show()
+        self.tray.setIcon(self.icon)
+    def moveToCenter(self):
+        self.screen = self.desktop()
+        self.tv_player.move((self.screen.width() - self.tv_player.frameSize().width()) / 2,
+                            (self.screen.height() - self.tv_player.frameSize().height()) / 2)
+
+
 
 
 class TwitchPlayer(QtWidgets.QWidget):
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
+        self.setWindowTitle("Twitch Player")
         # vlc init
         self.vlc = vlc.Instance()
         # media player object
@@ -24,7 +59,7 @@ class TwitchPlayer(QtWidgets.QWidget):
         # setting window for video player
         self.mediaplayer.set_xwindow(self.tv_player.winId())
         # helper window
-        self.helperwindow = self.closewindow = QtWidgets.QDialog(self, QtCore.Qt.Window)
+        self.helperwindow  = QtWidgets.QDialog(self, QtCore.Qt.Window)
         self.helperwindow.setWindowModality(QtCore.Qt.WindowModal)
         self.helperwindow.message = QtWidgets.QLabel()
         self.helperwindow.message.setAlignment(QtCore.Qt.AlignHCenter)
@@ -33,10 +68,14 @@ class TwitchPlayer(QtWidgets.QWidget):
         self.helperwindow.box.addWidget(self.helperwindow.message)
         self.helperwindow.box.addWidget(self.helperwindow.ok_button)
         self.helperwindow.setLayout(self.helperwindow.box)
-        self.helperwindow.setFixedSize(200,100)
+        self.helperwindow.setFixedSize(300,100)
         self.helperwindow.ok_button.clicked.connect(self.hide_helper_window)
         # GUI
+
         self.tv_streamername = QtWidgets.QLineEdit()
+        self.tv_streamername.setPlaceholderText("channel name")
+        self.tv_streamername.clearFocus()
+        self.tv_streamername.setAlignment(QtCore.Qt.AlignHCenter)
         self.tv_resolution = QtWidgets.QComboBox()
         self.tv_open_button = QtWidgets.QPushButton('Open')
         self.tv_online_check = QtWidgets.QCheckBox("online check")
@@ -48,13 +87,13 @@ class TwitchPlayer(QtWidgets.QWidget):
         self.tv_volumeslider.setToolTip("Volume")
         self.tv_volumeslider.valueChanged.connect(self.setVolume)
 
-        self.tv_play_button.setFixedSize(60,30)
-        self.tv_streamername.setFixedSize(200,30)
-        self.tv_volumeslider.setFixedSize(100,30)
-        self.tv_resolution.setFixedSize(100,30)
-        self.tv_full_screen_button.setFixedSize(70,30)
-        self.tv_open_button.setFixedSize(60,30)
-        self.tv_online_check.setFixedSize(95,30)
+        self.tv_play_button.setFixedSize(90,30)
+        self.tv_streamername.setFixedSize(200, 30)
+        self.tv_volumeslider.setFixedSize(100, 30)
+        self.tv_resolution.setFixedSize(100, 30)
+        self.tv_full_screen_button.setFixedSize(90, 30)
+        self.tv_open_button.setFixedSize(90, 30)
+        self.tv_online_check.setFixedSize(95, 30)
 
         # Boxes
         self.gbox = QtWidgets.QGridLayout()
@@ -139,11 +178,17 @@ class TwitchPlayer(QtWidgets.QWidget):
             self.helperwindow.show()
 
             return 0
-        if len(self.playlist.m3u8.playlists) == 0:
+        if len(self.playlist.m3u8.playlists) == 0 and not self.tv_online_check.isChecked():
             self.helperwindow.message.setText("channel offline")
             self.helperwindow.show()
+            return 0
+        elif len(self.playlist.m3u8.playlists) == 0 and not self.isHidden():
+            self.helperwindow.message.setText("channel offline, online checking is enabled")
+            self.helperwindow.show()
+
         if len(self.playlist.m3u8.playlists) == 0 and self.tv_online_check.isChecked():
             self.onlinecheck()
+
         for source in self.playlist.m3u8.playlists:
             self.tv_volumeslider.setValue(50)
             data = source.stream_info
@@ -160,6 +205,7 @@ class TwitchPlayer(QtWidgets.QWidget):
             self.tv_resolution.setDisabled(True)
             self.tv_play_button.setText("Stop")
             self.mediaplayer.set_mrl(self.tv_resolution.currentData())
+            self.setWindowTitle("Playing {0}".format(self.tv_streamername.text()))
             self.mediaplayer.play()
     
     def onlinecheck(self):
@@ -171,9 +217,14 @@ class TwitchPlayer(QtWidgets.QWidget):
     def channel_is_up(self, signal):
         self.channel_upped = signal
         if self.channel_upped:
-            self.helperwindow.message.setText("upped")
-            self.helperwindow.show()
+            # Message
+            if app.tv_player.isHidden():
+                app.tray.showMessage("Twitch Player",
+                                     "{0} is streaming!".format(self.tv_streamername.text()),
+                                     msecs=10000)
+                app.tray.setIcon(app.icon_online)
             self.tv_open_button_clicked()
+
     def closeEvent(self, event):
         self.closewindow = QtWidgets.QDialog(self, QtCore.Qt.Window)
         self.closewindow.setWindowModality(QtCore.Qt.WindowModal)
@@ -210,3 +261,7 @@ class TwitchPlayer(QtWidgets.QWidget):
     # def http_error(self,data):
     #    print("here")
     #    return 0
+
+if __name__ == "__main__":
+    app = MainApplication(sys.argv)
+    sys.exit(app.exec_())
