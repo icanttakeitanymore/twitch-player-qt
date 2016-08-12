@@ -4,6 +4,7 @@ from twitch_api import TwitchData
 from twitch_thread import TwitchThread
 import sys
 import vlc
+
 class MainApplication(QtWidgets.QApplication):
 
     def __init__(self, sys):
@@ -43,12 +44,12 @@ class TwitchPlayer(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         self.setWindowTitle("Twitch Player")
         # vlc init
-        self.vlc = vlc.Instance()
+        self.vlc = vlc.Instance("--ipv4-timeout=1000")
         # media player object
         self.mediaplayer = self.vlc.media_player_new()
-        # bugged
-        # self.event_manager = self.mediaplayer.event_manager()
-        # self.event_manager.event_attach(vlc.EventType.MediaPlayerEncounteredError, self.http_error,1)
+        # EndCatcher
+        self.event_manager = self.mediaplayer.event_manager()
+        self.event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, self.http_error, None)
         # frame for video player
         self.tv_player = QtWidgets.QFrame() 
         self.tv_player_constructor = self.tv_player.palette()
@@ -352,10 +353,15 @@ class TwitchPlayer(QtWidgets.QWidget):
             data.append(i[0])
         return data
 
-    # @vlc.callbackmethod
-    # def http_error(self,data):
-    #    print("here")
-    #    return 0
+    @vlc.callbackmethod
+    def http_error(self,event, data):
+        self.restart_vlc()
+        app.tray.showMessage("Twitch Player", "Channel is offline", 10000)
+        return 0
+    def restart_vlc(self):
+        """bugged"""
+        self.mediaplayer.stop()
+        print("Хз пока что тут нарешать")
     def show_channels_frame(self):
         if self.tv_channels_frame.isHidden():
             self.tv_channels_button.setDisabled(True)

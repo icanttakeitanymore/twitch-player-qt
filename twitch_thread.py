@@ -1,6 +1,5 @@
 from PyQt5 import QtCore
 from twitch_api import TwitchData
-import time
 
 class TwitchThread(QtCore.QThread):
     # Этот красс является потоком основного процесса.
