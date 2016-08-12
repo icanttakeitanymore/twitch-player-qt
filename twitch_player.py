@@ -71,11 +71,28 @@ class TwitchPlayer(QtWidgets.QWidget):
         self.helperwindow.setFixedSize(300,100)
         self.helperwindow.ok_button.clicked.connect(self.hide_helper_window)
         # GUI
-
-        self.tv_add_channel = QtWidgets.QPushButton("Add to list")
-        self.tv_del_channel = QtWidgets.QPushButton("Delete from list")
+        #
         self.tv_streamername = QtWidgets.QLineEdit()
         self.tv_streamername.setPlaceholderText("channel name")
+        self.tv_channels_button = QtWidgets.QPushButton("Channels")
+        self.tv_add_channel = QtWidgets.QPushButton("Add to list")
+        self.tv_del_channel = QtWidgets.QPushButton("Delete from list")
+
+        self.online_icon = QtGui.QIcon("resource/streamer_online.png")
+        self.offine_icon = QtGui.QIcon("resource/streamer_offline.png")
+        self.tv_channels_frame = QtWidgets.QFrame()
+        self.tv_channels_box = QtWidgets.QToolBox()
+        self.tv_channels_grid = QtWidgets.QGridLayout()
+        self.tv_channels_list = QtWidgets.QListView()
+        self.tv_channels_refresh_button = QtWidgets.QPushButton("Refresh")
+        self.tv_channels_grid.addWidget(self.tv_channels_list,1,1,3,3)
+        self.tv_channels_grid.addWidget(self.tv_channels_refresh_button, 3,0)
+        self.tv_channels_grid.addWidget(self.tv_add_channel,1,0)
+        self.tv_channels_grid.addWidget(self.tv_del_channel,2,0)
+        self.tv_channels_frame.setLayout(self.tv_channels_grid)
+        self.tv_channels_frame.setFixedHeight(200)
+        self.tv_channels_frame.hide()
+        #
         self.tv_completer = QtWidgets.QCompleter(self.get_channels())
         self.tv_streamername.setCompleter(self.tv_completer)
         self.tv_streamername.clearFocus()
@@ -91,6 +108,7 @@ class TwitchPlayer(QtWidgets.QWidget):
         self.tv_volumeslider.setToolTip("Volume")
         self.tv_volumeslider.valueChanged.connect(self.setVolume)
 
+        self.tv_channels_button.setFixedSize(90,30)
         self.tv_play_button.setFixedSize(90,30)
         self.tv_streamername.setFixedSize(200, 30)
         self.tv_volumeslider.setFixedSize(100, 30)
@@ -106,10 +124,10 @@ class TwitchPlayer(QtWidgets.QWidget):
         self.top_box_L = QtWidgets.QHBoxLayout()
         self.top_box_L.addWidget(self.tv_streamername)
         self.top_box_L.addWidget(self.tv_open_button)
-        self.top_box_L.addWidget(self.tv_add_channel)
-        self.top_box_L.addWidget(self.tv_del_channel)
+        self.top_box_L.addWidget(self.tv_channels_button)
 
         self.top_box_R = QtWidgets.QHBoxLayout()
+
         self.top_box_R.addWidget(self.tv_online_check, alignment=QtCore.Qt.AlignRight)
 
         self.bottom_box_L = QtWidgets.QHBoxLayout()
@@ -123,9 +141,10 @@ class TwitchPlayer(QtWidgets.QWidget):
         # Main Box
         self.gbox.addLayout(self.top_box_L, 0, 0, QtCore.Qt.AlignLeft)
         self.gbox.addLayout(self.top_box_R, 0,1, QtCore.Qt.AlignRight)
-        self.gbox.addWidget(self.tv_player, 2, 0)
-        self.gbox.addLayout(self.bottom_box_L, 3, 0, QtCore.Qt.AlignLeft)
-        self.gbox.addLayout(self.bottom_box_R, 3, 1, QtCore.Qt.AlignRight)
+        self.gbox.addWidget(self.tv_channels_frame,2,0)
+        self.gbox.addWidget(self.tv_player, 3, 0)
+        self.gbox.addLayout(self.bottom_box_L, 4, 0, QtCore.Qt.AlignLeft)
+        self.gbox.addLayout(self.bottom_box_R, 4, 1, QtCore.Qt.AlignRight)
 
         # Setting Layout
         self.setLayout(self.gbox)
@@ -139,6 +158,7 @@ class TwitchPlayer(QtWidgets.QWidget):
         self.tv_full_screen_button.clicked.connect(self.full_screen)
         self.tv_add_channel.clicked.connect(self.save_channel)
         self.tv_del_channel.clicked.connect(self.del_channel)
+        self.tv_channels_button.clicked.connect(self.show_channels_frame)
         self.channel_upped = 0
 
 
@@ -267,6 +287,7 @@ class TwitchPlayer(QtWidgets.QWidget):
     def resizeEvent(self, resizeEvent):
         if (not self.isFullScreen()):
             self.tv_player.setFixedWidth(self.width()-25)
+            self.tv_channels_frame.setFixedWidth(self.width()-25)
 
         else:
             self.tv_player.setFixedWidth(self.width())
@@ -331,6 +352,28 @@ class TwitchPlayer(QtWidgets.QWidget):
     # def http_error(self,data):
     #    print("here")
     #    return 0
+    def show_channels_frame(self):
+        if self.tv_channels_frame.isHidden():
+            self.tv_channels_button.setDisabled(True)
+            self.channels_refresh_frame()
+            self.tv_channels_button.setDisabled(False)
+        else:
+            self.tv_channels_frame.hide()
+
+    def channels_refresh_frame(self):
+        self.tv_channels_frame.show()
+        data = self.get_channels()
+        standardmodel = QtGui.QStandardItemModel()
+        for i in range(len(data)):
+            print(i)
+            online = TwitchData(data[i])
+            if online.m3u8.playlists:
+                iconfile = self.online_icon
+            else:
+                iconfile = self.offine_icon
+            item = QtGui.QStandardItem(iconfile, data[i])
+            standardmodel.appendRow(item)
+            self.tv_channels_list.setModel(standardmodel)
 
 if __name__ == "__main__":
     app = MainApplication(sys.argv)
