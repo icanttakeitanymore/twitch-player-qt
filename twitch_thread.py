@@ -3,13 +3,16 @@ from twitch_api import TwitchData
 import time
 
 class TwitchThread(QtCore.QThread):
+    # Этот красс является потоком основного процесса.
+    # Определяем сигнал, он возвращает строку.
     channel_is_up = QtCore.pyqtSignal(int)
 
+    # При инициализации экземпляра инициализируется конструктор класса QThread
     def __init__(self,channel,parent=None):
         QtCore.QThread.__init__(self,parent)
         self.channel = channel
         self.check = 0
-
+    # В этом методе находится тело потока.
     def run(self):
         while(not self.check):
             try:

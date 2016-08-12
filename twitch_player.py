@@ -72,8 +72,12 @@ class TwitchPlayer(QtWidgets.QWidget):
         self.helperwindow.ok_button.clicked.connect(self.hide_helper_window)
         # GUI
 
+        self.tv_add_channel = QtWidgets.QPushButton("Add to list")
+        self.tv_del_channel = QtWidgets.QPushButton("Delete from list")
         self.tv_streamername = QtWidgets.QLineEdit()
         self.tv_streamername.setPlaceholderText("channel name")
+        self.tv_completer = QtWidgets.QCompleter(self.get_channels())
+        self.tv_streamername.setCompleter(self.tv_completer)
         self.tv_streamername.clearFocus()
         self.tv_streamername.setAlignment(QtCore.Qt.AlignHCenter)
         self.tv_resolution = QtWidgets.QComboBox()
@@ -94,12 +98,16 @@ class TwitchPlayer(QtWidgets.QWidget):
         self.tv_full_screen_button.setFixedSize(90, 30)
         self.tv_open_button.setFixedSize(90, 30)
         self.tv_online_check.setFixedSize(95, 30)
+        self.tv_add_channel.setFixedSize(100, 30)
+        self.tv_del_channel.setFixedSize(140, 30)
 
         # Boxes
         self.gbox = QtWidgets.QGridLayout()
         self.top_box_L = QtWidgets.QHBoxLayout()
         self.top_box_L.addWidget(self.tv_streamername)
         self.top_box_L.addWidget(self.tv_open_button)
+        self.top_box_L.addWidget(self.tv_add_channel)
+        self.top_box_L.addWidget(self.tv_del_channel)
 
         self.top_box_R = QtWidgets.QHBoxLayout()
         self.top_box_R.addWidget(self.tv_online_check, alignment=QtCore.Qt.AlignRight)
@@ -129,6 +137,8 @@ class TwitchPlayer(QtWidgets.QWidget):
         self.tv_play_button.clicked.connect(self.tv_play_button_clicked)
         self.tv_open_button.clicked.connect(self.tv_open_button_clicked)
         self.tv_full_screen_button.clicked.connect(self.full_screen)
+        self.tv_add_channel.clicked.connect(self.save_channel)
+        self.tv_del_channel.clicked.connect(self.del_channel)
         self.channel_upped = 0
 
 
@@ -256,6 +266,56 @@ class TwitchPlayer(QtWidgets.QWidget):
 
         else:
             self.tv_player.setFixedWidth(self.width())
+
+    def save_channel(self):
+        from os.path import expanduser
+        from os import mkdir
+        from os.path import isdir
+        import sqlite3
+        home_path = expanduser("~")
+        if not isdir("{0}/.cache/twitch".format(home_path)):
+            mkdir("{0}/.cache/twitch".format(home_path),0o750)
+        con = sqlite3.connect(r'file:///{0}/twitch.db?mode=rwc'.format(home_path + "/.cache/twitch"), uri=True)
+        cursor = con.cursor()
+        createtable = '''CREATE TABLE IF NOT EXISTS channame (name TEXT UNIQUE ON CONFLICT IGNORE);'''
+        add_channel = '''INSERT INTO channame (name) VALUES ('{0}');'''.format(self.tv_streamername.text())
+        cursor.execute(createtable)
+        cursor.execute(add_channel)
+        con.commit()
+    def del_channel(self):
+        from os.path import expanduser
+        from os.path import isfile
+        import sqlite3
+        home_path = expanduser("~")
+        if isfile("{0}/.cache/twitch/twitch.db".format(home_path)):
+            con = sqlite3.connect(r'file:///{0}/twitch.db?mode=rw'.format(home_path + "/.cache/twitch"), uri=True)
+            cursor = con.cursor()
+            del_channel = '''DELETE FROM channame WHERE name LIKE {0};'''.format(self.tv_streamername.text())
+            cursor.execute(del_channel)
+            con.commit()
+    def get_channels(self):
+        from os.path import expanduser
+        from os import mkdir
+        from os.path import isdir
+        import sqlite3
+        home_path = expanduser("~")
+        if not isdir("{0}/.cache/twitch".format(home_path)):
+            mkdir("{0}/.cache/twitch".format(home_path), 0o750)
+            con = sqlite3.connect(r'file:///{0}/twitch.db?mode=rwc'.format(home_path + "/.cache/twitch"), uri=True)
+            cursor = con.cursor()
+            createtable = '''CREATE TABLE IF NOT EXISTS channame (name TEXT UNIQUE ON CONFLICT IGNORE);'''
+            cursor.execute(createtable)
+            con.commit()
+        con = sqlite3.connect(r'file:///{0}/twitch.db?mode=rwc'.format(home_path + "/.cache/twitch"), uri=True)
+        cursor = con.cursor()
+        getchannel = """SELECT * FROM channame"""
+        cursor.execute(getchannel)
+        # data
+        connection_data = cursor.fetchall()
+        data = []
+        for i in connection_data:
+            data.append(i[0])
+        return data
 
     # @vlc.callbackmethod
     # def http_error(self,data):
