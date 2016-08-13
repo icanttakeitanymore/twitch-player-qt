@@ -414,7 +414,7 @@ class TwitchPlayer(QtWidgets.QWidget):
                 iconfile = self.online_icon
             else:
                 iconfile = self.offine_icon
-            item = QtGui.QStandardItem(iconfile, data[i])
+            item = QtGui.QStandardItem(iconfile, data[i] + ' title :' + online.broadcast_title)
             standardmodel.appendRow(item)
             self.tv_channels_list.setModel(standardmodel)
 
