@@ -18,7 +18,7 @@ class MainApplication(QtWidgets.QApplication):
         self.app_tv_player = TwitchPlayer()
         self.app_tv_player.show()
         self.app_tv_player.tv_player.setFocus(3)
-        self.app_tv_player.setMinimumSize(640,480)
+        self.app_tv_player.setMinimumSize(840,480)
         self.setApplicationDisplayName("Twitch Player")
         self.setApplicationName("Twitch Player")
         self.app_tv_player.setWindowIcon(self.app_icon)
@@ -87,14 +87,14 @@ class TwitchPlayer(QtWidgets.QWidget):
         self.tv_widget_channels_frame = QtWidgets.QFrame()
         self.tv_channels_box = QtWidgets.QToolBox()
         self.tv_channels_grid = QtWidgets.QGridLayout()
-        self.tv_channels_list = QtWidgets.QListView()
-        self.tv_channels_refresh_button = QtWidgets.QPushButton("Refresh")
+        self.tv_channels_list = QtWidgets.QTableView()
+        self.tv_widget_channels_refresh_button = QtWidgets.QPushButton("Refresh")
         self.tv_channels_grid.addWidget(self.tv_channels_list,1,1,3,3)
-        self.tv_channels_grid.addWidget(self.tv_channels_refresh_button, 3,0)
+        self.tv_channels_grid.addWidget(self.tv_widget_channels_refresh_button, 3,0)
         self.tv_channels_grid.addWidget(self.tv_widget_channels_menu_add_button,1,0)
         self.tv_channels_grid.addWidget(self.tv_widget_channels_menu_del_button,2,0)
         self.tv_widget_channels_frame.setLayout(self.tv_channels_grid)
-        self.tv_widget_channels_frame.setFixedHeight(100)
+        self.tv_widget_channels_frame.setFixedHeight(150)
         self.tv_widget_channels_frame.hide()
         self.tv_widget_open_button = QtWidgets.QPushButton('Open')
         self.tv_online_check = QtWidgets.QCheckBox("online check")
@@ -162,6 +162,7 @@ class TwitchPlayer(QtWidgets.QWidget):
         self.tv_widget_channels_menu_add_button.clicked.connect(self.tv_function_save_channel_to_cache)
         self.tv_widget_channels_menu_del_button.clicked.connect(self.tv_function_del_channel_from_cache)
         self.tv_widget_channels_menu_button.clicked.connect(self.tv_function_show_channels_frame)
+        self.tv_widget_channels_refresh_button.clicked.connect(self.tv_function_channels_refresh)
         self.channel_upped = 0
 
     ###
@@ -398,15 +399,18 @@ class TwitchPlayer(QtWidgets.QWidget):
     def tv_function_show_channels_frame(self):
         if self.tv_widget_channels_frame.isHidden():
             self.tv_widget_channels_menu_button.setDisabled(True)
-            self.tv_function_channels_refresh_frame()
+            self.tv_function_channels_refresh()
             self.tv_widget_channels_menu_button.setDisabled(False)
         else:
             self.tv_widget_channels_frame.hide()
 
-    def tv_function_channels_refresh_frame(self):
+    def tv_function_channels_refresh(self):
         self.tv_widget_channels_frame.show()
         data = self.tv_function_get_channels_from_cache()
         standardmodel = QtGui.QStandardItemModel()
+        statuses = []
+        channels = []
+        titles = []
         for i in range(len(data)):
             print(i)
             online = TwitchData(data[i])
@@ -414,9 +418,18 @@ class TwitchPlayer(QtWidgets.QWidget):
                 iconfile = self.online_icon
             else:
                 iconfile = self.offine_icon
-            item = QtGui.QStandardItem(iconfile, data[i] + ' title :' + online.broadcast_title)
-            standardmodel.appendRow(item)
-            self.tv_channels_list.setModel(standardmodel)
+            statuses.append(iconfile)
+            channels.append(data[i])
+            titles.append(online.broadcast_title)
+        standardmodel.setHorizontalHeaderLabels(['channel', 'title'])
+        for i in range(len(channels)):
+            item1 = QtGui.QStandardItem(statuses[i],channels[i])
+            item3 = QtGui.QStandardItem(titles[i])
+            standardmodel.appendRow([item1,item3])
+        self.tv_channels_list.setModel(standardmodel)
+        self.tv_channels_list.setColumnWidth(1,500)
+
+
 
 if __name__ == "__main__":
     app = MainApplication(sys.argv)
