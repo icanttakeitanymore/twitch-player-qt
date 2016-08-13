@@ -263,41 +263,53 @@ class TwitchPlayer(QtWidgets.QWidget):
     ###
     ###
     def tv_function_twitch_get_channel(self):
+        self.tv_widget_resolutions_menu.clear()
+        self.tv_widget_play_button.setDisabled(True)
+        self.tv_widget_resolutions_menu.setDisabled(True)
+        self.tv_widget_fullscreen_button.setDisabled(True)
+        self.tv_widget_open_button.setDisabled(True)
         """getting twitch playlist"""
         if self.tv_vlc_mediaplayer.is_playing():
             self.tv_vlc_mediaplayer.stop()
-        self.tv_widget_resolutions_menu.setDisabled(False)
         self.channel = self.tv_widget_channel_name.text()
         try:
             self.playlist = TwitchData(self.channel)
         except KeyError:
             self.helperwindow.message.setText("channel non found")
             self.helperwindow.show()
-
+            self.tv_widget_open_button.setDisabled(False)
             return 0
         if len(self.playlist.m3u8.playlists) == 0 and not self.tv_online_check.isChecked():
             self.helperwindow.message.setText("channel offline")
             self.helperwindow.show()
+            self.tv_widget_open_button.setDisabled(False)
             return 0
         elif len(self.playlist.m3u8.playlists) == 0 and not self.isHidden():
             self.helperwindow.message.setText("channel offline, online checking is enabled")
             self.helperwindow.show()
-
+            self.tv_widget_open_button.setDisabled(False)
         if len(self.playlist.m3u8.playlists) == 0 and self.tv_online_check.isChecked():
             self.tv_function_online_check()
-
+            self.tv_widget_open_button.setDisabled(False)
         for source in self.playlist.m3u8.playlists:
             self.tv_widget_volumeslider.setValue(50)
             data = source.stream_info
             self.tv_widget_resolutions_menu.addItem(str(data.resolution[1]), source.uri)
             self.tv_widget_play_button.setDisabled(False)
+            self.tv_widget_resolutions_menu.setDisabled(False)
+            self.tv_widget_fullscreen_button.setDisabled(False)
+            self.tv_widget_open_button.setDisabled(False)
 
     def tv_function_play_button_clicked(self):
         """playing video"""
         if self.tv_vlc_mediaplayer.is_playing():
-            self.tv_widget_play_button.setText("Play")
+            self.tv_widget_play_button.setText("Stop")
             self.tv_vlc_mediaplayer.stop()
             self.tv_widget_resolutions_menu.setDisabled(False)
+            self.tv_widget_resolutions_menu.clear()
+            self.tv_widget_play_button.setDisabled(True)
+            self.tv_widget_resolutions_menu.setDisabled(True)
+            self.tv_widget_fullscreen_button.setDisabled(True)
         else:
             self.tv_widget_resolutions_menu.setDisabled(True)
             self.tv_widget_play_button.setText("Stop")
