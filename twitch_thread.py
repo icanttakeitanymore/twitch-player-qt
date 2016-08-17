@@ -24,8 +24,6 @@ class TwitchThread(QtCore.QThread):
                 self.check = 1
             self.sleep(3)
 
-    def time_pass(self):
-        pass
 
 
 
