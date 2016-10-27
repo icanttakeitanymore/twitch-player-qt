@@ -2,7 +2,7 @@ from PyQt5 import QtCore
 from twitch_api import TwitchData
 
 class TwitchThread(QtCore.QThread):
-    # Этот красс является потоком основного процесса.
+    # Этот класс является потоком основного процесса.
     # Определяем сигнал, он возвращает строку.
     channel_is_up = QtCore.pyqtSignal(int)
 
