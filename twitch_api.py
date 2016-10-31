@@ -34,3 +34,6 @@ class TwitchData:
             self.broadcast_title = self.videos.json()['videos'][0]['title']
         else:
             self.broadcast_title = 'no videos'
+            
+if __name__ == "__main__":
+    TwitchData("wisptheone")
