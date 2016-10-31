@@ -6,5 +6,5 @@
 dependences
 
 ```
-pyqt5, python-vlc, m3u8
+pyqt5, python-vlc, m3u8, requests
 ```
