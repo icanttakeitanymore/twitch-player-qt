@@ -8,6 +8,15 @@ import vlc
 # Widgets starts with tv_widget_*
 # Functions starts with tv_function_*
 # Vlc objects starts with tv_vlc_*
+class VideoQFrame(QtWidgets.QFrame):
+    def __init__(self):
+        QtWidgets.QFrame.__init__(self)
+        self.setStyleSheet("""
+                            QFrame { 
+                                background-color : #000000;
+                                    }
+                           """)
+        
 
 class MainApplication(QtWidgets.QApplication):
 
@@ -56,7 +65,7 @@ class TwitchPlayer(QtWidgets.QWidget):
         self.tv_vlc_event_manager = self.tv_vlc_mediaplayer.event_manager()
         self.tv_vlc_event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, self.http_error, None)
         # frame for video player
-        self.tv_player = QtWidgets.QFrame() 
+        self.tv_player = VideoQFrame() 
         self.tv_player_constructor = self.tv_player.palette()
         self.tv_player_constructor.setColor(QtGui.QPalette.Window,QtGui.QColor(0, 0, 0))
         self.tv_player.setPalette(self.tv_player_constructor)
