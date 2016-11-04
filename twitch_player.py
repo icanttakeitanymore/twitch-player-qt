@@ -58,7 +58,7 @@ class TwitchPlayer(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         self.setWindowTitle("Twitch Player")
         # vlc init
-        self.tv_vlc_vlcobj = vlc.Instance("--ipv4-timeout=1000")
+        self.tv_vlc_vlcobj = vlc.Instance("--ipv4-timeout=1000 --mouse-hide-timeout=3000")
         # media player object
         self.tv_vlc_mediaplayer = self.tv_vlc_vlcobj.media_player_new()
         # EndCatcher
