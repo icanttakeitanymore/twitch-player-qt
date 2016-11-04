@@ -29,7 +29,7 @@ sedline4_4 = self.online_icon = QtGui.QIcon("/usr/share/twitch-player-qt5/resour
 
 all:$(TARGET)
 package:
-	@echo Preparing..
+	# Preparing.
 	@mkdir -p $(PATH1)
 	@mkdir -p $(PATH2)
 	@cp twitch_player.py $(PATH1)
@@ -44,13 +44,11 @@ package:
 		./usr/share/twitch-player-qt5/twitch_player.py
 	@sed -i -e 's|$(sedline4)|$(sedline4_1)|g' \
 		./usr/share/twitch-player-qt5/twitch_player.py
-	# exec bin
-	@echo Creating sh in /usr/local/bin
+
 	@touch $(PATH2)/twitch-player-qt5
 	@printf "#!/bin/sh\n/usr/bin/python3 /usr/share/twitch-player-qt5/twitch_player.py\n" > $(PATH2)/twitch-player-qt5
 	@chmod +x $(PATH2)/twitch-player-qt5
 	# Shortcut
-	@echo Creating .desktop file
 	@mkdir -p ./usr/share/applications
 	@mkdir -p ./usr/share/pixmaps
 	@cp ./resource/twitch.png ./usr/share/pixmaps
@@ -63,7 +61,6 @@ package:
 	@echo "Categories=AudioVideo;Player;" >> ./usr/share/applications/twitch-player-qt5.desktop
 	@echo Terminal=false >> ./usr/share/applications/twitch-player-qt5.desktop
 	# making package
-	@echo Creating package.
 	@mkdir DEBIAN
 	@touch DEBIAN/control
 	@echo $(PACKAGE) > DEBIAN/control
@@ -79,12 +76,12 @@ package:
 	@chmod +x DEBIAN/postinst
 	@echo "#!/bin/sh" >> DEBIAN/postinst
 	@echo 'if [ "$1" = "configure" ] && [ -x "`which update-menus 2>/dev/null`" ] ; then update-menus ;fi' >> DEBIAN/postinst
-	@echo Clean temp files.
 	@mkdir twitch-player-qt5
 	@cp -r usr twitch-player-qt5
 	@cp -r DEBIAN twitch-player-qt5
 	@md5deep -r ./twitch-player-qt5/usr >> ./twitch-player-qt5/DEBIAN/md5sums
 	@fakeroot dpkg-deb --build twitch-player-qt5
+	# clean temp files.
 	@rm -rf twitch-player-qt5
 	@echo
 	@echo
@@ -96,7 +93,7 @@ package:
 	@echo "		######################################"
 	@echo
 	@echo
-	@echo Done.
+	# done.
 clean:
 	rm -rf ./usr
 	rm -rf ./DEBIAN
